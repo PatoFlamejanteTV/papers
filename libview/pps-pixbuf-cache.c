@@ -301,13 +301,14 @@ job_finished_cb (PpsJob *job,
 	}
 
 	copy_job_to_job_info (job_render, job_info, pixbuf_cache);
-	g_signal_emit (pixbuf_cache, signals[JOB_FINISHED], 0, job_render->page);
 
 	if (job_info->pending_job) {
 		job_info->job = job_info->pending_job;
 		job_info->pending_job = NULL;
 		pps_job_scheduler_push_job (job_info->job, job_info->pending_priority);
 	}
+
+	g_signal_emit (pixbuf_cache, signals[JOB_FINISHED], 0, job_render->page);
 }
 
 /* This checks a job to see if the job would generate the right sized pixbuf
@@ -865,8 +866,12 @@ pps_pixbuf_cache_get_texture (PpsPixbufCache *pixbuf_cache,
 	/* We don't need to wait for the idle to handle the callback */
 	if (job_info->job &&
 	    PPS_JOB_RENDER_TEXTURE (job_info->job)->page_ready) {
+		GdkTexture *texture;
+
 		copy_job_to_job_info (PPS_JOB_RENDER_TEXTURE (job_info->job), job_info, pixbuf_cache);
-		g_signal_emit (pixbuf_cache, signals[JOB_FINISHED], 0, job_info->region);
+		texture = job_info->texture;
+		g_signal_emit (pixbuf_cache, signals[JOB_FINISHED], 0, page);
+		return texture;
 	}
 
 	return job_info->texture;
